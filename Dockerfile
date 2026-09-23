@@ -3,16 +3,24 @@
 FROM python:3.13-slim AS build
 WORKDIR /build
 COPY app/requirements.txt .
-# The base image bundles setuptools 70.3.0, which carries CVE-2025-47273 (path
-# traversal). Upgrading it in the build stage is the fix; trivy flags it
-# otherwise and it is a real finding, not noise.
-RUN pip install --no-cache-dir --upgrade 'setuptools>=78.1.1' \
- && pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 FROM python:3.13-slim
 WORKDIR /app
 COPY --from=build /install /usr/local
 COPY app/ .
+
+# Strip pip (and its vendored copies of setuptools/wheel) from the RUNTIME image.
+# Two reasons, and the second is the one trivy found:
+#   1. A production container has no business carrying a package installer. If
+#      something can run `pip install` in there, so can an attacker.
+#   2. pip VENDORS its own msgpack and setuptools — 1.1.2 and 70.3.0 here, which
+#      carry GHSA-6v7p-g79w-8964 and CVE-2025-47273. Upgrading OUR dependencies
+#      does nothing for pip's vendored ones; only removing pip does.
+RUN rm -rf /usr/local/lib/python3.13/site-packages/pip* \
+           /usr/local/lib/python3.13/site-packages/setuptools* \
+           /usr/local/lib/python3.13/site-packages/wheel* \
+           /usr/local/bin/pip*
 
 # Unprivileged, fixed uid (CI asserts it). Cloud Run runs the container read-only
 # apart from /tmp by default, so there is no rootfs flag to set — see

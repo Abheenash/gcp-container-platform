@@ -65,7 +65,8 @@ jobs:
       - name: build image
         run: docker build -t gcp:ci .
       # Pinned, not @main — trivy's supply chain was compromised twice in March
-      # 2026 (CVE-2026-33634). v0.69.3 predates the malicious releases.
+      # 2026 (CVE-2026-33634). The malicious releases were v0.69.4/.5/.6;
+      # v0.74.0 is well past remediation.
       - name: install trivy (pinned)
         run: |
           curl -sfL "https://raw.githubusercontent.com/aquasecurity/trivy/${TRIVY_VERSION}/contrib/install.sh" \
