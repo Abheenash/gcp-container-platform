@@ -1,6 +1,6 @@
 import os
-import sys
 import pathlib
+import sys
 
 # The app is imported as a top-level module inside the image (WORKDIR /app), so
 # tests put app/ on the path the same way rather than inventing a package.
