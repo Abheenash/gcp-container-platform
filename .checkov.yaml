@@ -1,0 +1,15 @@
+# Checkov config. `skip-check` is a REVIEWED baseline — each entry carries its
+# reason. Everything else is a hard gate.
+directory:
+  - terraform
+compact: true
+quiet: true
+skip-check:
+  # The Cloud Run service is a public demo API, exactly like the ALB on the AWS
+  # side and the Container Apps ingress on Azure. allUsers on run.invoker IS the
+  # "this endpoint is public" switch, not an accident.
+  - CKV_GCP_102
+  # CSEK/CMEK on Artifact Registry needs a KMS key, a keyring, rotation and IAM
+  # for all of it, to protect public container images that are rebuilt from a
+  # public Dockerfile on every push. Google-managed encryption at rest is on.
+  - CKV_GCP_84
