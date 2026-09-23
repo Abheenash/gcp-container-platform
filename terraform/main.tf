@@ -1,5 +1,3 @@
-data "google_project" "current" {}
-
 locals {
   name = var.name_prefix
   labels = {

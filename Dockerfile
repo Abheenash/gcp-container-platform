@@ -3,7 +3,11 @@
 FROM python:3.13-slim AS build
 WORKDIR /build
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+# The base image bundles setuptools 70.3.0, which carries CVE-2025-47273 (path
+# traversal). Upgrading it in the build stage is the fix; trivy flags it
+# otherwise and it is a real finding, not noise.
+RUN pip install --no-cache-dir --upgrade 'setuptools>=78.1.1' \
+ && pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 FROM python:3.13-slim
 WORKDIR /app
