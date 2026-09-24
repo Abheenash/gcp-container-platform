@@ -17,10 +17,19 @@ COPY app/ .
 #   2. pip VENDORS its own msgpack and setuptools — 1.1.2 and 70.3.0 here, which
 #      carry GHSA-6v7p-g79w-8964 and CVE-2025-47273. Upgrading OUR dependencies
 #      does nothing for pip's vendored ones; only removing pip does.
-RUN rm -rf /usr/local/lib/python3.13/site-packages/pip* \
-           /usr/local/lib/python3.13/site-packages/setuptools* \
-           /usr/local/lib/python3.13/site-packages/wheel* \
-           /usr/local/bin/pip*
+#
+# The path comes from the interpreter, never written out as python3.NN. A
+# hardcoded version fails OPEN on the next base-image bump: `rm -rf` on a path
+# that no longer exists succeeds silently, pip survives into the runtime image,
+# and the vendored CVEs above come back with a green build. Not hypothetical —
+# that is exactly what happened when Dependabot proposed python:3.14-slim here,
+# and trivy caught it. The `test -z` turns the silent failure into a build failure.
+RUN SP="$(python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')" \
+ && STD="$(python -c 'import sysconfig; print(sysconfig.get_paths()["stdlib"])')" \
+ && rm -rf "$SP"/pip* "$SP"/setuptools* "$SP"/wheel* \
+           "$SP"/_distutils_hack "$SP"/distutils-precedence.pth \
+           "$STD"/ensurepip /usr/local/bin/pip* /root/.cache \
+ && test -z "$(find /usr/local -maxdepth 6 -name 'pip' -o -maxdepth 6 -name 'setuptools' | head -1)"
 
 # Unprivileged, fixed uid (CI asserts it). Cloud Run runs the container read-only
 # apart from /tmp by default, so there is no rootfs flag to set — see
