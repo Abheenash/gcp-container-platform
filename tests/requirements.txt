@@ -1,4 +1,12 @@
+# Test-only dependencies.
+#
+# The application's own pins live in app/requirements.txt and are pulled in with -r rather than
+# repeated here. They used to be repeated, and that is not a style preference:
+# Dependabot treats each requirements file as its own thing, so it bumped
+# fastapi here and not there, and `pip install -r tests/... -r app/requirements.txt` then failed
+# to resolve. One source of truth per dependency is what makes the bot's PRs
+# installable.
+-r ../app/requirements.txt
+
 pytest>=8
 httpx>=0.27
-fastapi==0.139.0
-pydantic==2.13.4
