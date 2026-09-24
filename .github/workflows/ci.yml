@@ -39,7 +39,7 @@ jobs:
         with:
           directory: terraform
           config_file: .checkov.yaml
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
       - name: fmt + validate
         working-directory: terraform
         run: |
@@ -52,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
       - run: pip install -r tests/requirements.txt -r app/requirements.txt
 
@@ -129,12 +129,12 @@ jobs:
       # the workload identity pool in terraform/identity.tf. No service account
       # JSON key exists — which matters more on GCP than elsewhere, because an SA
       # key is a long-lived bearer credential with no expiry.
-      - uses: google-github-actions/auth@v2
+      - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.WIF_PROVIDER }}
           service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - uses: google-github-actions/setup-gcloud@v3
 
       - name: build and push
         id: push
@@ -155,7 +155,7 @@ jobs:
         run: cosign sign --yes "${{ steps.push.outputs.digest }}"
 
       - name: attest build provenance (SLSA, in-toto)
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ vars.ARTIFACT_REGISTRY }}/app
           subject-digest: ${{ steps.push.outputs.digest_only }}
@@ -173,7 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: terraform-linters/setup-tflint@v5
+      - uses: terraform-linters/setup-tflint@v6
         with:
           tflint_version: v0.64.0
       - name: tflint
@@ -190,7 +190,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with: { terraform_wrapper: false }
       - name: terraform test
         working-directory: ${{ github.workspace }}/terraform
@@ -242,7 +242,7 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
           comment-summary-in-pr: always
