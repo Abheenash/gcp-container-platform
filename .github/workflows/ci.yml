@@ -48,14 +48,40 @@ jobs:
           terraform validate
 
   unit-tests:
-    name: pytest (fake Firestore client)
+    name: pytest (fake client + real Firestore emulator)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with: { python-version: "3.13" }
       - run: pip install -r tests/requirements.txt -r app/requirements.txt
+
+      # Google's own emulator, speaking the real gRPC protocol. Free, no project,
+      # no credentials — the client library skips auth entirely when
+      # FIRESTORE_EMULATOR_HOST is set, which is why the app needs no test-only
+      # code path. Started with `docker run` rather than a `services:` block
+      # because the image needs a command and service containers cannot set one.
+      - name: start the Firestore emulator
+        run: |
+          docker run -d --name fs-emulator -p 8085:8085 google/cloud-sdk:emulators \
+            gcloud emulators firestore start --host-port=0.0.0.0:8085
+          for _ in $(seq 1 60); do
+            if docker logs fs-emulator 2>&1 | grep -q "Dev App Server is now running"; then
+              echo "emulator is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::the Firestore emulator never started"; docker logs fs-emulator; exit 1
+
+      # REQUIRE_FIRESTORE=1 makes a missing emulator an error rather than six
+      # quiet skips behind a green tick.
       - run: python -m pytest tests -q
+        env:
+          FIRESTORE_EMULATOR_HOST: 127.0.0.1:8085
+          REQUIRE_FIRESTORE: "1"
+
+      - if: always()
+        run: docker rm -f fs-emulator || true
 
   image-scan:
     name: trivy (image + deps) + SBOM

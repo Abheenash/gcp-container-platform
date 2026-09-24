@@ -1,5 +1,13 @@
 # GCP Container Platform — the third build of the same service
 
+> **Sep 2026 (v2):** the API test suite now also runs against **Google's own Firestore
+> emulator**, alongside the hand-written fake — free, no GCP project, no credentials. The
+> app needed no change: `google-cloud-firestore` honours `FIRESTORE_EMULATOR_HOST` and
+> skips auth when it is set, so there is no test-only code path. Recorded honestly: the
+> emulator found no divergence, so the claim is that the fake is now *verified* faithful
+> rather than assumed to be. CI sets `REQUIRE_FIRESTORE=1` so an emulator that fails to
+> start errors instead of skipping six tests behind a green tick.
+>
 > **Sep 2026:** first release — Cloud Run + Firestore + Artifact Registry, service-account identity end to end (no JSON key anywhere), keyless CI via workload identity federation pinned to `assertion.sub`, 14 checkov checks / 5 terraform tests / 15 unit tests green. Deliberately not applied.
 
 The same notes API as [`secure-container-pipeline`](https://github.com/Abheenash/secure-container-pipeline)
