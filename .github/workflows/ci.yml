@@ -48,7 +48,7 @@ jobs:
           terraform validate
 
   unit-tests:
-    name: pytest (fake Cosmos container)
+    name: pytest (fake Firestore client)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
